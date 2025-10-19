@@ -1,0 +1,83 @@
+CREATE TABLE `collections` (
+	`id` varchar(64) NOT NULL,
+	`nameEn` varchar(255) NOT NULL,
+	`nameAr` varchar(255) NOT NULL,
+	`descriptionEn` text,
+	`descriptionAr` text,
+	`storyEn` text,
+	`storyAr` text,
+	`coverImage` varchar(512),
+	`videoUrl` varchar(512),
+	`isActive` boolean DEFAULT true,
+	`sortOrder` int DEFAULT 0,
+	`createdAt` timestamp DEFAULT (now()),
+	`updatedAt` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `collections_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `orderHistory` (
+	`id` varchar(64) NOT NULL,
+	`orderId` varchar(64) NOT NULL,
+	`status` varchar(50) NOT NULL,
+	`notes` text,
+	`createdBy` varchar(64),
+	`createdAt` timestamp DEFAULT (now()),
+	CONSTRAINT `orderHistory_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `orders` (
+	`id` varchar(64) NOT NULL,
+	`orderNumber` varchar(32) NOT NULL,
+	`customerName` varchar(255) NOT NULL,
+	`customerEmail` varchar(320),
+	`customerPhone` varchar(50) NOT NULL,
+	`customerWhatsapp` varchar(50),
+	`shippingCity` varchar(255) NOT NULL,
+	`shippingAddress` text,
+	`shippingCountry` varchar(100) DEFAULT 'UAE',
+	`productId` varchar(64) NOT NULL,
+	`selectedColor` varchar(100),
+	`selectedSize` varchar(50),
+	`customMeasurements` json,
+	`customerNotes` text,
+	`basePrice` int NOT NULL,
+	`customizationFee` int DEFAULT 0,
+	`totalPrice` int NOT NULL,
+	`depositAmount` int DEFAULT 0,
+	`status` enum('pending','approved','deposit_paid','in_production','ready','shipped','delivered','rejected','cancelled') NOT NULL DEFAULT 'pending',
+	`adminNotes` text,
+	`rejectionReason` text,
+	`priority` enum('low','normal','high','urgent') DEFAULT 'normal',
+	`isVip` boolean DEFAULT false,
+	`tags` json DEFAULT ('[]'),
+	`createdAt` timestamp DEFAULT (now()),
+	`updatedAt` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	`approvedAt` timestamp,
+	`rejectedAt` timestamp,
+	`completedAt` timestamp,
+	CONSTRAINT `orders_id` PRIMARY KEY(`id`),
+	CONSTRAINT `orders_orderNumber_unique` UNIQUE(`orderNumber`)
+);
+--> statement-breakpoint
+CREATE TABLE `products` (
+	`id` varchar(64) NOT NULL,
+	`collectionId` varchar(64),
+	`nameEn` varchar(255) NOT NULL,
+	`nameAr` varchar(255) NOT NULL,
+	`descriptionEn` text,
+	`descriptionAr` text,
+	`storyEn` text,
+	`storyAr` text,
+	`basePrice` int NOT NULL,
+	`images` json DEFAULT ('[]'),
+	`availableColors` json DEFAULT ('[]'),
+	`availableSizes` json DEFAULT ('[]'),
+	`fabricEn` varchar(255),
+	`fabricAr` varchar(255),
+	`isActive` boolean DEFAULT true,
+	`isFeatured` boolean DEFAULT false,
+	`sortOrder` int DEFAULT 0,
+	`createdAt` timestamp DEFAULT (now()),
+	`updatedAt` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `products_id` PRIMARY KEY(`id`)
+);

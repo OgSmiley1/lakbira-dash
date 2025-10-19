@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Tajawal:wght@300;400;500;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -43,39 +45,40 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
+  /* Moroccan luxury palette with warm golds and creams */
+  --primary: oklch(0.65 0.15 65); /* Warm gold */
+  --primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.65 0.15 65);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --chart-1: oklch(0.65 0.15 65);
+  --chart-2: oklch(0.55 0.15 210);
+  --chart-3: oklch(0.45 0.12 30);
+  --chart-4: oklch(0.70 0.10 50);
+  --chart-5: oklch(0.60 0.12 180);
+  --radius: 0.5rem;
+  --background: oklch(0.98 0.01 50); /* Soft cream */
+  --foreground: oklch(0.25 0.02 30); /* Deep brown */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
+  --card-foreground: oklch(0.25 0.02 30);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
+  --popover-foreground: oklch(0.25 0.02 30);
+  --secondary: oklch(0.92 0.02 40); /* Soft beige */
+  --secondary-foreground: oklch(0.25 0.02 30);
+  --muted: oklch(0.95 0.01 40);
+  --muted-foreground: oklch(0.45 0.02 30);
+  --accent: oklch(0.55 0.15 210); /* Royal blue */
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
+  --border: oklch(0.88 0.02 40);
+  --input: oklch(0.88 0.02 40);
+  --ring: oklch(0.65 0.15 65);
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --sidebar-foreground: oklch(0.25 0.02 30);
+  --sidebar-accent: oklch(0.95 0.01 40);
+  --sidebar-accent-foreground: oklch(0.25 0.02 30);
+  --sidebar-border: oklch(0.88 0.02 40);
+  --sidebar-ring: oklch(0.65 0.15 65);
 }
 
 .dark {
@@ -119,6 +122,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Cormorant Garamond', 'Tajawal', serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', 'Tajawal', serif;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -168,5 +175,72 @@
       padding-right: 2rem;
       max-width: 1280px; /* Standard content width */
     }
+  }
+  
+  /* Moroccan pattern overlay */
+  .moroccan-pattern {
+    background-image: 
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(218, 165, 32, 0.03) 10px,
+        rgba(218, 165, 32, 0.03) 20px
+      );
+  }
+  
+  /* Cinematic video background */
+  .video-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+    z-index: 0;
+  }
+  
+  /* Arabic text optimization */
+  [lang="ar"], .rtl {
+    direction: rtl;
+    text-align: right;
+  }
+  
+  /* Luxury button animation */
+  .btn-luxury {
+    @apply relative overflow-hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-luxury::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  
+  .btn-luxury:hover::before {
+    width: 300px;
+    height: 300px;
   }
 }

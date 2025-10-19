@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, products, Product, InsertProduct, collections, Collection, InsertCollection, orders, Order, InsertOrder } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { nanoid } from 'nanoid';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -85,4 +86,148 @@ export async function getUser(id: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============ PRODUCTS ============
+
+export async function getAllProducts(): Promise<Product[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select().from(products).where(eq(products.isActive, true));
+  
+  // Parse JSON fields
+  return result.map(p => ({
+    ...p,
+    images: p.images ? JSON.parse(p.images) : [],
+    availableColors: p.availableColors ? JSON.parse(p.availableColors) : [],
+    availableSizes: p.availableSizes ? JSON.parse(p.availableSizes) : [],
+  }));
+}
+
+export async function getProductById(id: string): Promise<Product | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  
+  if (result.length === 0) return undefined;
+  
+  const p = result[0];
+  return {
+    ...p,
+    images: p.images ? JSON.parse(p.images) : [],
+    availableColors: p.availableColors ? JSON.parse(p.availableColors) : [],
+    availableSizes: p.availableSizes ? JSON.parse(p.availableSizes) : [],
+  };
+}
+
+export async function createProduct(product: InsertProduct): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Stringify JSON fields
+  const data = {
+    ...product,
+    images: product.images ? JSON.stringify(product.images) : null,
+    availableColors: product.availableColors ? JSON.stringify(product.availableColors) : null,
+    availableSizes: product.availableSizes ? JSON.stringify(product.availableSizes) : null,
+  };
+
+  await db.insert(products).values(data as any);
+}
+
+// ============ COLLECTIONS ============
+
+export async function getAllCollections(): Promise<Collection[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(collections).where(eq(collections.isActive, true));
+}
+
+export async function getCollectionById(id: string): Promise<Collection | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(collections).where(eq(collections.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ============ ORDERS ============
+
+export async function createOrder(orderData: Omit<InsertOrder, 'id' | 'orderNumber'>): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const orderId = nanoid();
+  const orderNumber = `LK${Date.now().toString().slice(-8)}`;
+
+  const data: InsertOrder = {
+    ...orderData,
+    id: orderId,
+    orderNumber,
+    customMeasurements: orderData.customMeasurements ? JSON.stringify(orderData.customMeasurements) : null,
+    tags: orderData.tags ? JSON.stringify(orderData.tags) : null,
+  };
+
+  await db.insert(orders).values(data as any);
+  return orderId;
+}
+
+export async function getAllOrders(): Promise<Order[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select().from(orders);
+  
+  return result.map(o => ({
+    ...o,
+    customMeasurements: o.customMeasurements ? JSON.parse(o.customMeasurements) : null,
+    tags: o.tags ? JSON.parse(o.tags) : [],
+  }));
+}
+
+export async function getOrderById(id: string): Promise<Order | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  
+  if (result.length === 0) return undefined;
+  
+  const o = result[0];
+  return {
+    ...o,
+    customMeasurements: o.customMeasurements ? JSON.parse(o.customMeasurements) : null,
+    tags: o.tags ? JSON.parse(o.tags) : [],
+  };
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  status: string,
+  adminNotes?: string,
+  rejectionReason?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: any = { status };
+  
+  if (status === 'approved') {
+    updateData.approvedAt = new Date();
+  } else if (status === 'rejected') {
+    updateData.rejectedAt = new Date();
+    if (rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+  } else if (status === 'delivered') {
+    updateData.completedAt = new Date();
+  }
+  
+  if (adminNotes) {
+    updateData.adminNotes = adminNotes;
+  }
+
+  await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+}
+
