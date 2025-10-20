@@ -71,12 +71,28 @@ export default function ProductDetail() {
                 className="w-full h-full object-cover"
               />
               
-              {/* Color Tint Overlay for Live Preview */}
+              {/* Advanced Fabric Color Transformation */}
               {selectedColor && (
-                <div 
-                  className="absolute inset-0 mix-blend-color opacity-30 pointer-events-none"
-                  style={{ backgroundColor: selectedColor.hex }}
-                />
+                <>
+                  {/* Multiply blend for realistic fabric color */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundColor: selectedColor.hex,
+                      mixBlendMode: 'multiply',
+                      opacity: 0.7
+                    }}
+                  />
+                  {/* Screen blend for highlights */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      backgroundColor: selectedColor.hex,
+                      mixBlendMode: 'screen',
+                      opacity: 0.2
+                    }}
+                  />
+                </>
               )}
             </div>
 

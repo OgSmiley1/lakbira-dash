@@ -12,38 +12,61 @@ const productImages = [
   "/IMG_7261.jpeg",
 ];
 
+const productVideos = [
+  "/1000009328.mp4",
+  "/1000009329.mp4",
+  "/1000009330.mp4",
+];
+
+// Combine images and videos
+const allMedia = [
+  ...productImages.map(src => ({ type: 'image', src })),
+  ...productVideos.map(src => ({ type: 'video', src })),
+];
+
 export default function Home() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setIsVisible(false);
       setTimeout(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+        setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
         setIsVisible(true);
       }, 500);
-    }, 4000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background Slideshow */}
+      {/* Animated Background Slideshow with Videos */}
       <div className="fixed inset-0 z-0">
-        {productImages.map((img, idx) => (
+        {allMedia.map((media, idx) => (
           <div
-            key={img}
+            key={`${media.type}-${idx}`}
             className={`absolute inset-0 transition-opacity duration-1000 ${
-              idx === currentImageIndex && isVisible ? "opacity-100" : "opacity-0"
+              idx === currentMediaIndex && isVisible ? "opacity-100" : "opacity-0"
             }`}
           >
-            <img
-              src={img}
-              alt="La Kbira Collection"
-              className="w-full h-full object-cover"
-            />
+            {media.type === 'image' ? (
+              <img
+                src={media.src}
+                alt="La Kbira Collection"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <video
+                src={media.src}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
           </div>
         ))}
