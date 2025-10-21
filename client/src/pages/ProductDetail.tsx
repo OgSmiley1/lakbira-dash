@@ -49,9 +49,9 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-background">
       {/* Back Button */}
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <Link href="/products">
-          <Button variant="ghost" className="gap-2">
+          <Button variant="ghost" className="gap-2 text-sm sm:text-base">
             <ArrowLeft className="w-4 h-4" />
             Back to Collection
           </Button>
@@ -59,8 +59,8 @@ export default function ProductDetail() {
       </div>
 
       {/* Product Details */}
-      <div className="container mx-auto px-6 pb-20">
-        <div className="grid lg:grid-cols-2 gap-12">
+      <div className="container mx-auto px-4 sm:px-6 pb-12 sm:pb-20">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12">
           {/* Image Gallery */}
           <div className="space-y-4">
             {/* Main Image with Color Overlay */}

@@ -21,16 +21,16 @@ export default function Products() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-b from-primary/5 to-transparent py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center space-y-4 max-w-3xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground">
+      <div className="bg-gradient-to-b from-primary/5 to-transparent py-12 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center space-y-3 sm:space-y-4 max-w-3xl mx-auto">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-foreground">
               Our Collection
-              <span className="block text-3xl md:text-4xl text-muted-foreground mt-2" lang="ar">
+              <span className="block text-2xl sm:text-3xl md:text-4xl text-muted-foreground mt-2" lang="ar">
                 مجموعتنا
               </span>
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground px-4">
               Discover handcrafted luxury pieces that blend tradition with contemporary elegance
             </p>
           </div>
@@ -38,8 +38,8 @@ export default function Products() {
       </div>
 
       {/* Products Grid */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {products?.map((product: any) => (
             <Link key={product.id} href={`/product/${product.id}`}>
               <Card className="group cursor-pointer overflow-hidden hover:shadow-2xl transition-all duration-300 border-border/50">
