@@ -88,6 +88,7 @@ export const orders = mysqlTable("orders", {
   customizationFee: int("customizationFee").default(0),
   totalPrice: int("totalPrice").notNull(),
   depositAmount: int("depositAmount").default(0),
+  locale: mysqlEnum("locale", ["en", "ar"]).default("en").notNull(),
   status: mysqlEnum("status", [
     "pending",
     "approved",
@@ -113,6 +114,28 @@ export const orders = mysqlTable("orders", {
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * Registration entries captured from marketing forms and popups.
+ */
+export const registrations = mysqlTable("registrations", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  registrationNumber: varchar("registrationNumber", { length: 40 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  city: varchar("city", { length: 255 }),
+  country: varchar("country", { length: 100 }).default("UAE"),
+  preferredLanguage: mysqlEnum("preferredLanguage", ["en", "ar"]).default("en").notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["new", "confirmed", "waitlisted", "cancelled"]).default("new").notNull(),
+  source: varchar("source", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type Registration = typeof registrations.$inferSelect;
+export type InsertRegistration = typeof registrations.$inferInsert;
 
 /**
  * Order status history for tracking
