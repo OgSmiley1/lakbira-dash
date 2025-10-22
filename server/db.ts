@@ -1,8 +1,11 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, Product, InsertProduct, collections, Collection, InsertCollection, orders, Order, InsertOrder } from "../drizzle/schema";
-import { ENV } from './_core/env';
-import { nanoid } from 'nanoid';
+import { InsertUser, users, products, Product, InsertProduct, collections, Collection, InsertCollection, orders, Order, InsertOrder, registrations, Registration, InsertRegistration } from "../drizzle/schema";
+import { generateReadableId } from "@shared/lib/identifiers";
+import { ENV } from "./_core/env";
+import { nanoid } from "nanoid";
+import { sendOrderConfirmationEmail, sendRegistrationConfirmationEmail } from "./notifications/sendEmail";
+import type { SupportedLocale } from "./notifications/emailTemplates";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -154,22 +157,35 @@ export async function getCollectionById(id: string): Promise<Collection | undefi
 
 // ============ ORDERS ============
 
-export async function createOrder(orderData: Omit<InsertOrder, 'id' | 'orderNumber'>): Promise<string> {
+/**
+ * Persists a waiting-list order and dispatches the bilingual confirmation email.
+ */
+export async function createOrder(orderData: Omit<InsertOrder, "id" | "orderNumber">): Promise<string> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const orderId = nanoid();
-  const orderNumber = `LK${Date.now().toString().slice(-8)}`;
+  const orderNumber = generateReadableId("LK");
+  const locale: SupportedLocale = (orderData.locale as SupportedLocale) ?? "en";
 
   const data: InsertOrder = {
     ...orderData,
     id: orderId,
     orderNumber,
+    locale,
     customMeasurements: orderData.customMeasurements ? JSON.stringify(orderData.customMeasurements) : null,
     tags: orderData.tags ? JSON.stringify(orderData.tags) : null,
   };
 
   await db.insert(orders).values(data as any);
+
+  await sendOrderConfirmationEmail({
+    email: orderData.customerEmail,
+    clientName: orderData.customerName,
+    reference: orderNumber,
+    locale,
+  });
+
   return orderId;
 }
 
@@ -229,5 +245,64 @@ export async function updateOrderStatus(
   }
 
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+}
+
+// ============ REGISTRATIONS ============
+
+/**
+ * Saves a registration lead and emails the registrant their confirmation token.
+ */
+export async function createRegistration(
+  registrationData: Omit<InsertRegistration, "id" | "registrationNumber">
+): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const registrationId = nanoid();
+  const registrationNumber = generateReadableId("REG");
+  const locale: SupportedLocale = (registrationData.preferredLanguage as SupportedLocale) ?? "en";
+
+  const payload: InsertRegistration = {
+    ...registrationData,
+    id: registrationId,
+    registrationNumber,
+    preferredLanguage: locale,
+    notes: registrationData.notes ?? null,
+    source: registrationData.source ?? null,
+  };
+
+  await db.insert(registrations).values(payload as any);
+
+  await sendRegistrationConfirmationEmail({
+    email: registrationData.email,
+    clientName: registrationData.fullName,
+    reference: registrationNumber,
+    locale,
+  });
+
+  return registrationId;
+}
+
+/**
+ * Returns all registration records for the administrative dashboard.
+ */
+export async function getAllRegistrations(): Promise<Registration[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(registrations);
+}
+
+/**
+ * Updates the status of a stored registration entry.
+ */
+export async function updateRegistrationStatus(
+  registrationId: string,
+  status: Registration["status"]
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(registrations).set({ status }).where(eq(registrations.id, registrationId));
 }
 

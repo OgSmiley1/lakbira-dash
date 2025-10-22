@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -9,14 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, ArrowLeft, Check } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { getDocumentLocale } from "@/lib/locale";
 
 export default function OrderForm() {
   const [, params] = useRoute("/order/:productId");
   const [, setLocation] = useLocation();
   const productId = params?.productId || "";
-  
+
   const { data: product, isLoading } = trpc.products.getById.useQuery({ id: productId });
   const createOrderMutation = trpc.orders.create.useMutation();
+  const locale = getDocumentLocale();
 
   const [formData, setFormData] = useState({
     customerName: "",
@@ -64,6 +66,7 @@ export default function OrderForm() {
         customizationFee: wantsCustomMeasurements ? 5000 : 0, // 50 AED customization fee
         totalPrice: product.basePrice + (wantsCustomMeasurements ? 5000 : 0),
         depositAmount: 0,
+        locale,
       });
 
       toast.success("Order submitted successfully! We'll contact you soon.");

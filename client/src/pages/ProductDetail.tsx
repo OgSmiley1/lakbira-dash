@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,16 +6,39 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { resolveDefaultFabricColor } from "@shared/lib/fabricColor";
 
+type ProductColor = {
+  hex: string;
+  name?: string;
+  nameAr?: string;
+};
+
+/**
+ * Presents the full product detail experience including gallery, colour and size selectors.
+ */
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
   const productId = params?.id || "";
-  
+
   const { data: product, isLoading } = trpc.products.getById.useQuery({ id: productId });
-  
-  const [selectedColor, setSelectedColor] = useState<any>(null);
+
+  const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const availableColors = useMemo(
+    () => (Array.isArray(product?.availableColors) ? (product.availableColors as ProductColor[]) : []),
+    [product?.availableColors],
+  );
+
+  useEffect(() => {
+    const nextColor = resolveDefaultFabricColor<ProductColor>(availableColors, selectedColor);
+
+    if (nextColor?.hex !== selectedColor?.hex) {
+      setSelectedColor(nextColor);
+    }
+  }, [availableColors, selectedColor?.hex]);
 
   if (isLoading) {
     return (
@@ -40,12 +63,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  // Set default color if not selected
-  if (!selectedColor && Array.isArray(product.availableColors) && product.availableColors.length > 0) {
-    setSelectedColor(product.availableColors[0]);
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Back Button */}
@@ -63,21 +80,13 @@ export default function ProductDetail() {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Image Gallery */}
           <div className="space-y-4">
-            {/* Main Image with Color Overlay */}
+            {/* Main Image */}
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
               <img
                 src={Array.isArray(product.images) ? product.images[currentImageIndex] : ''}
                 alt={product.nameEn}
                 className="w-full h-full object-cover"
               />
-              
-              {/* Color Tint Overlay for Live Preview */}
-              {selectedColor && (
-                <div 
-                  className="absolute inset-0 mix-blend-color opacity-30 pointer-events-none"
-                  style={{ backgroundColor: selectedColor.hex }}
-                />
-              )}
             </div>
 
             {/* Thumbnail Gallery */}
@@ -154,7 +163,7 @@ export default function ProductDetail() {
               </div>
               
               <div className="flex flex-wrap gap-3">
-                {Array.isArray(product.availableColors) && product.availableColors.map((color: any, idx: number) => (
+                {availableColors.map((color: ProductColor, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedColor(color)}
