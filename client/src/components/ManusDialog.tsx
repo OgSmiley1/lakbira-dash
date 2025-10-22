@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { APP_LOGO, APP_TITLE } from "@/const";
@@ -9,7 +9,20 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getDocumentLocale, isArabicLocale } from "@/lib/locale";
 
+/**
+ * Localised string bundle for presenting the Manus login dialog.
+ */
+interface LocaleCopy {
+  heading: string;
+  description: string;
+  cta: string;
+}
+
+/**
+ * Supported configuration for rendering the Manus authentication dialog.
+ */
 interface ManusDialogProps {
   title?: string;
   logo?: string;
@@ -19,6 +32,11 @@ interface ManusDialogProps {
   onClose?: () => void;
 }
 
+/**
+ * Presents an authenticated Manus login prompt that adapts its copy to the
+ * current document locale so Arabic visitors receive a fully translated
+ * experience.
+ */
 export function ManusDialog({
   title = APP_TITLE,
   logo = APP_LOGO,
@@ -27,9 +45,26 @@ export function ManusDialog({
   onOpenChange,
   onClose,
 }: ManusDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(open);
+  const localeCopy = React.useMemo<LocaleCopy>(() => {
+    const locale = getDocumentLocale();
+    if (isArabicLocale(locale)) {
+      return {
+        heading: title,
+        description: "يرجى تسجيل الدخول عبر Manus للمتابعة",
+        cta: "تسجيل الدخول عبر Manus",
+      };
+    }
 
-  useEffect(() => {
+    return {
+      heading: title,
+      description: "Please login with Manus to continue",
+      cta: "Login with Manus",
+    };
+  }, [title]);
+
+  const [internalOpen, setInternalOpen] = React.useState(open);
+
+  React.useEffect(() => {
     if (!onOpenChange) {
       setInternalOpen(open);
     }
@@ -60,10 +95,10 @@ export function ManusDialog({
 
           {/* Title and subtitle */}
           <DialogTitle className="text-xl font-semibold text-[#34322d] leading-[26px] tracking-[-0.44px]">
-            {title}
+            {localeCopy.heading}
           </DialogTitle>
           <DialogDescription className="text-sm text-[#858481] leading-5 tracking-[-0.154px]">
-            Please login with Manus to continue
+            {localeCopy.description}
           </DialogDescription>
         </div>
 
@@ -73,7 +108,7 @@ export function ManusDialog({
             onClick={onLogin}
             className="w-full h-10 bg-[#1a1a19] hover:bg-[#1a1a19]/90 text-white rounded-[10px] text-sm font-medium leading-5 tracking-[-0.154px]"
           >
-            Login with Manus
+            {localeCopy.cta}
           </Button>
         </DialogFooter>
       </DialogContent>
