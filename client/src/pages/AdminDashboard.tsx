@@ -3,9 +3,10 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, BarChart3, Users, Package, Image, Settings, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, BarChart3, Users, Package, Image, Settings, FileText, Zap } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import AuditLogs from "./AuditLogs";
+import AIInsights from "./AIInsights";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -135,6 +136,10 @@ export default function AdminDashboard() {
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Audit</span>
             </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              <span className="hidden sm:inline">AI</span>
+            </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Settings</span>
@@ -186,6 +191,11 @@ export default function AdminDashboard() {
           {/* Audit Tab */}
           <TabsContent value="audit" className="space-y-6">
             <AuditLogs />
+          </TabsContent>
+
+          {/* AI Insights Tab */}
+          <TabsContent value="ai" className="space-y-6">
+            <AIInsights />
           </TabsContent>
 
           {/* Settings Tab */}
