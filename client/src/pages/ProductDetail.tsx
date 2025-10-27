@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-import { resolveDefaultFabricColor } from "@shared/lib/fabricColor";
+import { normaliseFabricHex, resolveDefaultFabricColor } from "@shared/lib/fabricColor";
+import { useI18n, T } from "@/contexts/I18nContext";
 
 type ProductColor = {
   hex: string;
@@ -15,22 +16,43 @@ type ProductColor = {
 };
 
 /**
- * Presents the full product detail experience including gallery, colour and size selectors.
- */
-export default function ProductDetail() {
+ * Presents the full product detail experience including gallery, colour and size selectors
+ * while tinting the hero image to mirror the active fabric swatch.
+*/
+export default function ProductDetail(): React.JSX.Element {
   const [, params] = useRoute("/product/:id");
   const productId = params?.id || "";
+  const { locale, t } = useI18n();
 
-  const { data: product, isLoading } = trpc.products.getById.useQuery({ id: productId });
+  const { data: product, isLoading } = trpc.products.getById.useQuery({ id: productId, locale });
 
   const [selectedColor, setSelectedColor] = useState<ProductColor | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const availableColors = useMemo(
-    () => (Array.isArray(product?.availableColors) ? (product.availableColors as ProductColor[]) : []),
-    [product?.availableColors],
-  );
+  const availableColors = useMemo(() => {
+    if (!Array.isArray(product?.availableColors)) {
+      return [] as ProductColor[];
+    }
+
+    return (product.availableColors as ProductColor[])
+      .map(color => {
+        const normalisedHex = normaliseFabricHex(color.hex);
+        if (!normalisedHex) {
+          return null;
+        }
+
+        return {
+          ...color,
+          hex: normalisedHex,
+        } as ProductColor;
+      })
+      .filter((color): color is ProductColor => Boolean(color));
+  }, [product?.availableColors]);
+
+  const overlayColor = useMemo(() => {
+    return normaliseFabricHex(selectedColor?.hex) ?? "transparent";
+  }, [selectedColor?.hex]);
 
   useEffect(() => {
     const nextColor = resolveDefaultFabricColor<ProductColor>(availableColors, selectedColor);
@@ -40,12 +62,36 @@ export default function ProductDetail() {
     }
   }, [availableColors, selectedColor?.hex]);
 
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedColor?.hex]);
+
+  const galleryImages = useMemo(() => {
+    if (!product) {
+      return [] as string[];
+    }
+
+    const keyedImages = product.imagesByColor || {};
+    if (selectedColor?.hex && keyedImages[selectedColor.hex]) {
+      return keyedImages[selectedColor.hex];
+    }
+
+    const defaultColor = availableColors[0]?.hex;
+    if (defaultColor && keyedImages[defaultColor]) {
+      return keyedImages[defaultColor];
+    }
+
+    return Array.isArray(product.images) ? product.images : [];
+  }, [availableColors, product, selectedColor?.hex]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <Sparkles className="w-12 h-12 text-primary animate-pulse mx-auto" />
-          <p className="text-muted-foreground">Loading product...</p>
+          <p className="text-muted-foreground">
+            <T k="productDetail.loading" />
+          </p>
         </div>
       </div>
     );
@@ -55,9 +101,13 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-2xl text-muted-foreground">Product not found</p>
+          <p className="text-2xl text-muted-foreground">
+            <T k="productDetail.notFound" />
+          </p>
           <Link href="/products">
-            <Button>Back to Collection</Button>
+            <Button>
+              <T k="productDetail.backToCollection" />
+            </Button>
           </Link>
         </div>
       </div>
@@ -70,7 +120,7 @@ export default function ProductDetail() {
         <Link href="/products">
           <Button variant="ghost" className="gap-2">
             <ArrowLeft className="w-4 h-4" />
-            Back to Collection
+            <T k="productDetail.backToCollection" />
           </Button>
         </Link>
       </div>
@@ -83,15 +133,21 @@ export default function ProductDetail() {
             {/* Main Image */}
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-muted">
               <img
-                src={Array.isArray(product.images) ? product.images[currentImageIndex] : ''}
-                alt={product.nameEn}
+                src={galleryImages[currentImageIndex] ?? ""}
+                alt={product.localized.name}
                 className="w-full h-full object-cover"
+              />
+              <div
+                aria-hidden="true"
+                data-testid="fabric-color-overlay"
+                className="absolute inset-0 mix-blend-multiply transition-colors duration-500"
+                style={{ backgroundColor: overlayColor }}
               />
             </div>
 
             {/* Thumbnail Gallery */}
             <div className="flex gap-3 overflow-x-auto pb-2">
-              {Array.isArray(product.images) && product.images.map((img: string, idx: number) => (
+              {galleryImages.map((img: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentImageIndex(idx)}
@@ -115,31 +171,28 @@ export default function ProductDetail() {
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <h1 className="text-4xl font-bold text-foreground">
-                    {product.nameEn}
+                    {product.localized.name}
                   </h1>
-                  <p className="text-2xl text-muted-foreground" lang="ar">
-                    {product.nameAr}
-                  </p>
                 </div>
                 <Badge variant="secondary" className="text-lg px-4 py-2">
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Limited Edition
+                  <T k="productDetail.limitedEdition" />
                 </Badge>
               </div>
 
               <div className="text-4xl font-bold text-primary">
-                {(product.basePrice / 100).toFixed(0)} AED
+                {(product.basePrice / 100).toFixed(0)} <T k="common.currency" />
               </div>
 
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {product.descriptionEn}
+                {product.localized.description}
               </p>
 
-              {product.storyEn && (
+              {product.localized.story && (
                 <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-6">
                     <p className="text-sm text-foreground/80 italic">
-                      {product.storyEn}
+                      {product.localized.story}
                     </p>
                   </CardContent>
                 </Card>
@@ -150,23 +203,21 @@ export default function ProductDetail() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">
-                  Select Color
-                  <span className="text-sm font-normal text-muted-foreground ml-2" lang="ar">
-                    اختر اللون
-                  </span>
+                  <T k="productDetail.selectColor" />
                 </h3>
                 {selectedColor && (
                   <span className="text-sm text-muted-foreground">
-                    {selectedColor.name} • {selectedColor.nameAr}
+                    {locale === "ar" ? selectedColor.nameAr ?? selectedColor.name : selectedColor.name ?? selectedColor.nameAr}
                   </span>
                 )}
               </div>
-              
+
               <div className="flex flex-wrap gap-3">
                 {availableColors.map((color: ProductColor, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedColor(color)}
+                    aria-label={`${t("productDetail.selectColor")} ${color.name ?? ''} ${color.nameAr ?? ''}`.trim()}
                     className={`group relative w-16 h-16 rounded-full border-4 transition-all ${
                       selectedColor?.hex === color.hex
                         ? 'border-primary scale-110'
@@ -191,12 +242,9 @@ export default function ProductDetail() {
             {/* Size Selection */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">
-                Select Size
-                <span className="text-sm font-normal text-muted-foreground ml-2" lang="ar">
-                  اختر المقاس
-                </span>
+                <T k="productDetail.selectSize" />
               </h3>
-              
+
               <div className="grid grid-cols-5 gap-3">
                 {Array.isArray(product.availableSizes) && product.availableSizes.map((size: string) => (
                   <button
@@ -215,36 +263,30 @@ export default function ProductDetail() {
             </div>
 
             {/* Fabric Info */}
-            {product.fabricEn && (
+            {product.localized.fabric && (
               <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Fabric</h3>
-                <p className="text-muted-foreground">
-                  {product.fabricEn}
-                  {product.fabricAr && (
-                    <span className="mx-2">•</span>
-                  )}
-                  <span lang="ar">{product.fabricAr}</span>
-                </p>
+                <h3 className="text-lg font-semibold">
+                  <T k="productDetail.fabric" />
+                </h3>
+                <p className="text-muted-foreground">{product.localized.fabric}</p>
               </div>
             )}
 
             {/* CTA Buttons */}
             <div className="space-y-3 pt-4">
               <Link href={`/order/${product.id}`}>
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="w-full btn-luxury text-lg py-6"
                   disabled={!selectedColor || !selectedSize}
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Join Waiting List
-                  <span className="mx-2">•</span>
-                  انضم إلى قائمة الانتظار
+                  <T k="productDetail.joinWaitlist" />
                 </Button>
               </Link>
-              
+
               <p className="text-center text-sm text-muted-foreground">
-                Limited availability • Custom tailoring available
+                <T k="productDetail.ctaFootnote" />
               </p>
             </div>
           </div>

@@ -12,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { getLoginUrl } from "@/const";
 import { Package, Clock, Check, X, Sparkles, TrendingUp, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import DashboardContentStudio from "@/components/dashboard/ContentStudio";
+
+type DashboardTab = "orders" | "registrations" | "content";
 
 const orderStatusLabels = {
   en: {
@@ -70,6 +73,7 @@ export default function Dashboard(): React.JSX.Element {
         pageSubtitle: "تابع الطلبات والتسجيلات في الوقت الفعلي",
         waitingListTab: "قائمة الانتظار",
         registrationsTab: "التسجيلات",
+        contentTab: "استوديو المحتوى",
         searchPlaceholder: "ابحث بالاسم أو البريد أو المدينة",
         stats: {
           totalOrders: "إجمالي الطلبات",
@@ -81,6 +85,9 @@ export default function Dashboard(): React.JSX.Element {
         },
         ordersSectionTitle: "قائمة الانتظار",
         registrationsSectionTitle: "سجل التسجيلات",
+        contentSectionTitle: "إدارة الوسائط والمجموعات",
+        contentSectionDescription:
+          "حدّث فيديوهات العرض، أضف المجموعات، وعدّل الأسعار الفاخرة من مكان واحد.",
         orderLocationLabel: "المدينة",
         orderProductLabel: "تفاصيل القطعة",
         orderPriceLabel: "الإجمالي",
@@ -116,6 +123,7 @@ export default function Dashboard(): React.JSX.Element {
       pageSubtitle: "Monitor waiting list orders and lead registrations in real time",
       waitingListTab: "Waiting List",
       registrationsTab: "Registrations",
+      contentTab: "Content Studio",
       searchPlaceholder: "Search by name, email, or city",
       stats: {
         totalOrders: "Total Orders",
@@ -127,6 +135,9 @@ export default function Dashboard(): React.JSX.Element {
       },
       ordersSectionTitle: "Waiting List",
       registrationsSectionTitle: "Registration Ledger",
+      contentSectionTitle: "Media & Catalog Management",
+      contentSectionDescription:
+        "Launch new collections, refresh hero videos, and adjust couture pricing in one place.",
       orderLocationLabel: "Location",
       orderProductLabel: "Piece details",
       orderPriceLabel: "Total",
@@ -154,7 +165,7 @@ export default function Dashboard(): React.JSX.Element {
       toastApproved: "Order approved successfully",
       toastRejected: "Order rejected successfully",
       toastError: "Failed to update order status",
-    };
+      };
   }, [isArabic]);
 
   const { user, loading, isAuthenticated } = useAuth();
@@ -171,7 +182,7 @@ export default function Dashboard(): React.JSX.Element {
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
-  const [activeTab, setActiveTab] = useState<"orders" | "registrations">("orders");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("orders");
   const [searchTerm, setSearchTerm] = useState("");
 
   if (loading) {
@@ -373,11 +384,12 @@ export default function Dashboard(): React.JSX.Element {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as typeof activeTab)}>
+        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as DashboardTab)}>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <TabsList>
               <TabsTrigger value="orders">{copy.waitingListTab}</TabsTrigger>
               <TabsTrigger value="registrations">{copy.registrationsTab}</TabsTrigger>
+              <TabsTrigger value="content">{copy.contentTab}</TabsTrigger>
             </TabsList>
             <Input
               className="w-full md:w-80"
@@ -489,13 +501,13 @@ export default function Dashboard(): React.JSX.Element {
             </Card>
           </TabsContent>
 
-          <TabsContent value="registrations">
-            <Card>
-              <CardHeader>
-                <CardTitle>{copy.registrationsSectionTitle}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {registrationsQuery.isLoading ? (
+        <TabsContent value="registrations">
+          <Card>
+            <CardHeader>
+              <CardTitle>{copy.registrationsSectionTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {registrationsQuery.isLoading ? (
                   <div className="text-center py-8">
                     <Sparkles className="w-8 h-8 text-primary animate-pulse mx-auto" />
                   </div>
@@ -549,9 +561,20 @@ export default function Dashboard(): React.JSX.Element {
                   <div className="text-center py-8 text-muted-foreground">{copy.noRegistrations}</div>
                 )}
               </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </Card>
+        </TabsContent>
+        <TabsContent value="content">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-foreground">
+                {copy.contentSectionTitle}
+              </h2>
+              <p className="text-muted-foreground text-sm">{copy.contentSectionDescription}</p>
+            </div>
+            <DashboardContentStudio />
+          </div>
+        </TabsContent>
+      </Tabs>
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

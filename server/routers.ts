@@ -2,8 +2,15 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
-import { getAllProducts, getProductById, getAllCollections, getCollectionById, createOrder, getAllOrders, getOrderById, updateOrderStatus, createRegistration, getAllRegistrations, updateRegistrationStatus } from "./db";
+import { getAllProducts, getProductById, getAllCollections, getCollectionById, createCollection, updateCollectionMedia, createOrder, getAllOrders, getOrderById, updateOrderStatus, createRegistration, getAllRegistrations, updateRegistrationStatus, updateProductDetails } from "./db";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+
+function assertAdmin(role?: string) {
+  if (role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -20,26 +27,107 @@ export const appRouter = router({
   }),
 
   products: router({
-    list: publicProcedure.query(async () => {
-      return await getAllProducts();
-    }),
-    
-    getById: publicProcedure
-      .input(z.object({ id: z.string() }))
+    list: publicProcedure
+      .input(z.object({ locale: z.enum(["en", "ar"]).default("en") }).optional())
       .query(async ({ input }) => {
-        return await getProductById(input.id);
+        return await getAllProducts(input?.locale ?? "en");
+      }),
+
+    getById: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          locale: z.enum(["en", "ar"]).default("en"),
+        })
+      )
+      .query(async ({ input }) => {
+        return await getProductById(input.id, input.locale);
+      }),
+
+    updateDetails: protectedProcedure
+      .input(
+        z.object({
+          productId: z.string(),
+          basePrice: z.number().int().optional(),
+          images: z.array(z.string()).optional(),
+          availableColors: z
+            .array(
+              z.object({
+                hex: z.string(),
+                name: z.string().optional(),
+                nameAr: z.string().optional(),
+              }),
+            )
+            .optional(),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        assertAdmin(ctx.user?.role);
+
+        await updateProductDetails(input.productId, {
+          basePrice: input.basePrice,
+          images: input.images,
+          availableColors: input.availableColors,
+        });
+
+        return { success: true } as const;
       }),
   }),
 
   collections: router({
-    list: publicProcedure.query(async () => {
-      return await getAllCollections();
-    }),
-    
-    getById: publicProcedure
-      .input(z.object({ id: z.string() }))
+    list: publicProcedure
+      .input(z.object({ locale: z.enum(["en", "ar"]).default("en") }).optional())
       .query(async ({ input }) => {
-        return await getCollectionById(input.id);
+        return await getAllCollections(input?.locale ?? "en");
+      }),
+
+    getById: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          locale: z.enum(["en", "ar"]).default("en"),
+        })
+      )
+      .query(async ({ input }) => {
+        return await getCollectionById(input.id, input.locale);
+      }),
+
+    create: protectedProcedure
+      .input(
+        z.object({
+          nameEn: z.string(),
+          nameAr: z.string(),
+          descriptionEn: z.string().optional(),
+          descriptionAr: z.string().optional(),
+          storyEn: z.string().optional(),
+          storyAr: z.string().optional(),
+          coverImage: z.string().optional(),
+          videoUrl: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        assertAdmin(ctx.user?.role);
+        const collectionId = await createCollection({
+          ...input,
+        });
+        return { success: true, collectionId } as const;
+      }),
+
+    updateMedia: protectedProcedure
+      .input(
+        z.object({
+          collectionId: z.string(),
+          videoUrl: z.string().optional(),
+          coverImage: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        assertAdmin(ctx.user?.role);
+        await updateCollectionMedia(input.collectionId, {
+          videoUrl: input.videoUrl,
+          coverImage: input.coverImage,
+        });
+        return { success: true } as const;
       }),
   }),
 

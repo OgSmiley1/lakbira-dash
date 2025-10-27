@@ -7,6 +7,37 @@ export interface FabricColorLike {
 }
 
 /**
+ * Normalises a hexadecimal colour string so CSS consumers can reliably use it.
+ *
+ * The helper trims whitespace, removes duplicate hash prefixes, strips any
+ * illegal characters, and guarantees a leading `#` for valid values. Invalid
+ * inputs (including empty strings) return `null` so callers can gracefully
+ * ignore unusable colours.
+ *
+ * @param hex - Raw hexadecimal colour input from APIs or user forms.
+ * @returns A CSS-ready hexadecimal string beginning with `#`, or `null`.
+ */
+export function normaliseFabricHex(hex?: string | null): string | null {
+  if (typeof hex !== "string") {
+    return null;
+  }
+
+  const trimmed = hex.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const withoutHashes = trimmed.replace(/^#+/, "");
+  const sanitised = withoutHashes.replace(/[^0-9a-fA-F]/g, "");
+
+  if (!sanitised) {
+    return null;
+  }
+
+  return `#${sanitised}`;
+}
+
+/**
  * Determines which fabric colour should be treated as the active selection.
  *
  * The function prioritises the previously selected colour when it still exists
@@ -26,9 +57,17 @@ export function resolveDefaultFabricColor<T extends FabricColorLike>(
     return null;
   }
 
-  const normalised = availableColors.filter((color): color is T => {
-    return typeof color?.hex === "string" && color.hex.trim().length > 0;
-  });
+  const normalised: T[] = [];
+
+  for (const color of availableColors) {
+    const hex = normaliseFabricHex(color?.hex ?? null);
+    if (!hex) {
+      continue;
+    }
+
+    (color as T).hex = hex as any;
+    normalised.push(color as T);
+  }
 
   if (normalised.length === 0) {
     return null;

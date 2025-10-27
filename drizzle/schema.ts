@@ -1,4 +1,14 @@
-import { mysqlEnum, mysqlTable, text, timestamp, varchar, int, boolean, json } from "drizzle-orm/mysql-core";
+import {
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  int,
+  boolean,
+  json,
+  uniqueIndex,
+} from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -39,6 +49,29 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = typeof collections.$inferInsert;
 
 /**
+ * Localised copy entries for collections.
+ */
+export const collectionTranslations = mysqlTable(
+  "collection_translations",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    collectionId: varchar("collectionId", { length: 64 }).notNull(),
+    locale: mysqlEnum("locale", ["en", "ar"]).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    story: text("story"),
+    createdAt: timestamp("createdAt").defaultNow(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+  },
+  table => ({
+    collectionLocaleUnique: uniqueIndex("collection_locale_unique").on(table.collectionId, table.locale),
+  })
+);
+
+export type CollectionTranslation = typeof collectionTranslations.$inferSelect;
+export type InsertCollectionTranslation = typeof collectionTranslations.$inferInsert;
+
+/**
  * Products (Kaftans, Abayas, etc.)
  */
 export const products = mysqlTable("products", {
@@ -65,6 +98,70 @@ export const products = mysqlTable("products", {
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = typeof products.$inferInsert;
+
+/**
+ * Locale-specific copy for couture products.
+ */
+export const productTranslations = mysqlTable(
+  "product_translations",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    productId: varchar("productId", { length: 64 }).notNull(),
+    locale: mysqlEnum("locale", ["en", "ar"]).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    description: text("description"),
+    story: text("story"),
+    fabric: varchar("fabric", { length: 255 }),
+    createdAt: timestamp("createdAt").defaultNow(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+  },
+  table => ({
+    productLocaleUnique: uniqueIndex("product_locale_unique").on(table.productId, table.locale),
+  })
+);
+
+export type ProductTranslation = typeof productTranslations.$inferSelect;
+export type InsertProductTranslation = typeof productTranslations.$inferInsert;
+
+/**
+ * Product colour variants powering swatch experiences.
+ */
+export const productColorVariants = mysqlTable(
+  "product_color_variants",
+  {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    productId: varchar("productId", { length: 64 }).notNull(),
+    colorKey: varchar("colorKey", { length: 16 }).notNull(),
+    swatchNameEn: varchar("swatchNameEn", { length: 120 }),
+    swatchNameAr: varchar("swatchNameAr", { length: 120 }),
+    sortOrder: int("sortOrder").default(0),
+    createdAt: timestamp("createdAt").defaultNow(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+  },
+  table => ({
+    productColorUnique: uniqueIndex("product_color_unique").on(table.productId, table.colorKey),
+  })
+);
+
+export type ProductColorVariant = typeof productColorVariants.$inferSelect;
+export type InsertProductColorVariant = typeof productColorVariants.$inferInsert;
+
+/**
+ * Image catalogue keyed to specific colour variants.
+ */
+export const productVariantImages = mysqlTable("product_variant_images", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  variantId: varchar("variantId", { length: 64 }).notNull(),
+  imageUrl: varchar("imageUrl", { length: 512 }).notNull(),
+  altTextEn: varchar("altTextEn", { length: 255 }),
+  altTextAr: varchar("altTextAr", { length: 255 }),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type ProductVariantImage = typeof productVariantImages.$inferSelect;
+export type InsertProductVariantImage = typeof productVariantImages.$inferInsert;
 
 /**
  * Orders (Waiting List / Registry)

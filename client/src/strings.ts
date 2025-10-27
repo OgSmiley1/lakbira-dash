@@ -1,0 +1,88 @@
+import type { SupportedLocale } from "@shared/i18n";
+
+const baseStrings = {
+  en: {
+    "app.title": "Lakbira Platform",
+    "common.currency": "AED",
+    "productDetail.loading": "Loading product...",
+    "productDetail.notFound": "Product not found",
+    "productDetail.backToCollection": "Back to Collection",
+    "productDetail.limitedEdition": "Limited Edition",
+    "productDetail.selectColor": "Select Color",
+    "productDetail.selectSize": "Select Size",
+    "productDetail.fabric": "Fabric",
+    "productDetail.joinWaitlist": "Join Waiting List",
+    "productDetail.ctaFootnote": "Limited availability • Custom tailoring available",
+    "home.nav.brand": "La Kbira",
+    "home.nav.brandArabic": "لا كبيرة",
+    "home.nav.localeEn": "English",
+    "home.nav.localeAr": "العربية",
+    "home.hero.title": "Ramadan Collection",
+    "home.hero.subtitle": "Ramadan Eid Collection 2024",
+    "home.hero.description": "Handcrafted luxury kaftans and abayas blending Moroccan heritage with contemporary elegance. Each piece tells a story of tradition, craftsmanship, and timeless beauty.",
+    "home.hero.ctaPrimary": "Join the Waiting List",
+    "home.hero.ctaSecondary": "Explore the Collection",
+    "home.hero.trust.licensed": "Licensed in Dubai",
+    "home.hero.trust.handcrafted": "Handcrafted Excellence",
+    "home.hero.trust.limited": "Limited Edition",
+    "home.manus.headline": "Preview your Manus admin console",
+    "home.manus.body": "Launch a secure Manus window to audit approvals, customer requests, and campaign performance without leaving La Kbira.",
+    "home.manus.cta": "View Manus Dashboard",
+    "home.manus.footnote": "Requires Manus administrator access.",
+    "home.featured.heading": "Why La Kbira?",
+    "home.featured.subheading": "Experience luxury fashion that honours tradition while embracing modernity",
+    "home.featured.card1.title": "Exclusive Designs",
+    "home.featured.card1.body": "Each kaftan is a unique masterpiece featuring intricate Moroccan embroidery and premium fabrics.",
+    "home.featured.card2.title": "Custom Tailoring",
+    "home.featured.card2.body": "Personalised measurements and colour choices ensure the perfect fit for your special occasion.",
+    "home.featured.card3.title": "Waiting List Access",
+    "home.featured.card3.body": "Join our exclusive registry for priority access to new collections and special offers.",
+  },
+  ar: {
+    "app.title": "منصّة لقبرة",
+    "common.currency": "درهم",
+    "productDetail.loading": "جاري تحميل المنتج...",
+    "productDetail.notFound": "المنتج غير موجود",
+    "productDetail.backToCollection": "العودة إلى المجموعة",
+    "productDetail.limitedEdition": "إصدار محدود",
+    "productDetail.selectColor": "اختر اللون",
+    "productDetail.selectSize": "اختر المقاس",
+    "productDetail.fabric": "الخامة",
+    "productDetail.joinWaitlist": "انضم إلى قائمة الانتظار",
+    "productDetail.ctaFootnote": "توفّر محدود • تفصيل حسب الطلب متاح",
+    "home.nav.brand": "لا كبيرة",
+    "home.nav.brandArabic": "La Kbira",
+    "home.nav.localeEn": "الإنجليزية",
+    "home.nav.localeAr": "العربية",
+    "home.hero.title": "مجموعة رمضان",
+    "home.hero.subtitle": "مجموعة رمضان والعيد ٢٠٢٤",
+    "home.hero.description": "قفاطين وعبايات فاخرة مصنوعة يدويًا تمزج بين التراث المغربي والأناقة العصرية. كل قطعة تحكي قصة من الحرفة والجمال الخالد.",
+    "home.hero.ctaPrimary": "انضم إلى قائمة الانتظار",
+    "home.hero.ctaSecondary": "استكشف المجموعة",
+    "home.hero.trust.licensed": "مرخّصة في دبي",
+    "home.hero.trust.handcrafted": "حرفية عالية",
+    "home.hero.trust.limited": "إصدار محدود",
+    "home.manus.headline": "اطّلع على لوحة تحكم Manus",
+    "home.manus.body": "افتح نافذة Manus آمنة لمراجعة الموافقات وطلبات العملاء وحملات التسويق دون مغادرة موقع لا كبيرة.",
+    "home.manus.cta": "عرض لوحة Manus",
+    "home.manus.footnote": "يتطلب حساب مدير في Manus.",
+    "home.featured.heading": "لماذا لا كبيرة؟",
+    "home.featured.subheading": "اختبر أزياء فاخرة تحافظ على الأصالة وتواكب الحداثة",
+    "home.featured.card1.title": "تصاميم حصرية",
+    "home.featured.card1.body": "كل قفطان تحفة فريدة بتطريز مغربي فاخر وأقمشة عالية الجودة.",
+    "home.featured.card2.title": "تفصيل مخصص",
+    "home.featured.card2.body": "قياسات وخيارات ألوان مخصّصة لضمان إطلالة مثالية لمناسبتك الخاصة.",
+    "home.featured.card3.title": "وصول لقائمة الانتظار",
+    "home.featured.card3.body": "انضم إلى سجلنا الحصري لتحصل على أولوية في المجموعات الجديدة والعروض الخاصة.",
+  },
+} as const;
+
+/**
+ * Translation keys available throughout the client application.
+ */
+export type TranslationKey = keyof typeof baseStrings.en;
+
+/**
+ * Application-wide translation dictionary keyed by locale.
+ */
+export const strings: Record<SupportedLocale, Record<TranslationKey, string>> = baseStrings;

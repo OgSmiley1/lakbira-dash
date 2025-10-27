@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import { ManusAdBanner } from "@/components/ManusAdBanner";
+import { useI18n, T } from "@/contexts/I18nContext";
 
 const productImages = [
   "/IMG_7266.jpeg",
@@ -19,6 +21,23 @@ const productImages = [
 export default function Home(): React.JSX.Element {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const { locale, setLocale, t } = useI18n();
+
+  /**
+   * Emits a custom event that notifies the Manus runtime to open the dashboard preview.
+   * Errors are silently logged so the UI never crashes if the runtime is unavailable.
+   */
+  const handleManusPreview = useCallback(() => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("manus:open-dashboard", {
+          detail: { source: "home-hero" },
+        }),
+      );
+    } catch (error) {
+      console.error("Unable to dispatch Manus dashboard open event", error);
+    }
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -61,15 +80,22 @@ export default function Home(): React.JSX.Element {
         <div className="flex items-center gap-2 text-white">
           <Sparkles className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold text-white tracking-wider">
-            La Kbira <span className="text-lg font-light">| لا كبيرة</span>
+            <T k="home.nav.brand" />
+            <span className="text-lg font-light"> | <T k="home.nav.brandArabic" /></span>
           </h1>
         </div>
         <div className="flex flex-col gap-2 text-sm font-medium text-white sm:flex-row sm:items-center sm:gap-6">
-          <button className="transition-colors hover:text-primary">
-            English
+          <button
+            className={`transition-colors hover:text-primary ${locale === "en" ? "text-primary" : "text-white"}`}
+            onClick={() => setLocale("en")}
+          >
+            <T k="home.nav.localeEn" />
           </button>
-          <button className="text-white/80 transition-colors hover:text-primary">
-            العربية
+          <button
+            className={`transition-colors hover:text-primary ${locale === "ar" ? "text-primary" : "text-white/80"}`}
+            onClick={() => setLocale("ar")}
+          >
+            <T k="home.nav.localeAr" />
           </button>
         </div>
       </nav>
@@ -78,16 +104,13 @@ export default function Home(): React.JSX.Element {
       <div className="relative z-10 container mx-auto flex min-h-[calc(100vh-100px)] flex-col items-center justify-center px-4 text-center sm:px-6">
         <div className="max-w-4xl space-y-8 animate-fade-in">
           {/* Arabic Title */}
-          <h2
-            className="text-4xl font-bold leading-tight text-white drop-shadow-2xl sm:text-6xl md:text-8xl"
-            lang="ar"
-          >
-            مجموعة رمضان
+          <h2 className="text-4xl font-bold leading-tight text-white drop-shadow-2xl sm:text-6xl md:text-8xl">
+            <T k="home.hero.title" />
           </h2>
 
-          {/* English Subtitle */}
+          {/* Subtitle */}
           <p className="text-2xl font-light tracking-wide text-white/90 sm:text-3xl md:text-5xl">
-            Ramadan Eid Collection 2024
+            <T k="home.hero.subtitle" />
           </p>
 
           {/* Decorative Line */}
@@ -99,8 +122,7 @@ export default function Home(): React.JSX.Element {
 
           {/* Description */}
           <p className="mx-auto max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg md:text-xl">
-            Handcrafted luxury kaftans and abayas, blending Moroccan heritage with contemporary elegance.
-            Each piece tells a story of tradition, craftsmanship, and timeless beauty.
+            <T k="home.hero.description" />
           </p>
 
           {/* CTA Buttons */}
@@ -109,9 +131,7 @@ export default function Home(): React.JSX.Element {
               size="lg"
               className="btn-luxury w-full rounded-full bg-primary px-8 py-6 text-lg text-white shadow-2xl transition-colors hover:bg-primary/90 sm:w-auto"
             >
-              انضم إلى قائمة الانتظار
-              <span className="mx-2">•</span>
-              Join Waiting List
+              <T k="home.hero.ctaPrimary" />
             </Button>
             <Link href="/products">
               <Button
@@ -119,9 +139,7 @@ export default function Home(): React.JSX.Element {
                 variant="outline"
                 className="btn-luxury w-full rounded-full border-2 border-white px-8 py-6 text-lg text-white backdrop-blur-sm transition-colors hover:bg-white/10 sm:w-auto"
               >
-                استكشف المجموعة
-                <span className="mx-2">•</span>
-                Explore Collection
+                <T k="home.hero.ctaSecondary" />
               </Button>
             </Link>
           </div>
@@ -130,15 +148,21 @@ export default function Home(): React.JSX.Element {
           <div className="flex flex-wrap justify-center gap-6 pt-12 text-sm text-white/70 sm:gap-8">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Licensed from Dubai</span>
+              <span>
+                <T k="home.hero.trust.licensed" />
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Handcrafted Excellence</span>
+              <span>
+                <T k="home.hero.trust.handcrafted" />
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Limited Edition</span>
+              <span>
+                <T k="home.hero.trust.limited" />
+              </span>
             </div>
           </div>
         </div>
@@ -149,15 +173,26 @@ export default function Home(): React.JSX.Element {
         </div>
       </div>
 
+      {/* Manus preview banner */}
+      <div className="relative z-10 container mx-auto px-4 pb-12 sm:px-6">
+        <ManusAdBanner
+          headline={t("home.manus.headline")}
+          body={t("home.manus.body")}
+          ctaLabel={t("home.manus.cta")}
+          footnote={t("home.manus.footnote")}
+          onAction={handleManusPreview}
+        />
+      </div>
+
       {/* Featured Section Preview */}
       <div className="relative z-10 bg-gradient-to-b from-transparent to-background py-16 sm:py-20">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-12 space-y-4 text-center">
             <h3 className="text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
-              Why La Kbira?
+              <T k="home.featured.heading" />
             </h3>
             <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg">
-              Experience luxury fashion that honors tradition while embracing modernity
+              <T k="home.featured.subheading" />
             </p>
           </div>
 
@@ -166,9 +201,11 @@ export default function Home(): React.JSX.Element {
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">Exclusive Designs</h4>
+              <h4 className="text-xl font-semibold mb-2">
+                <T k="home.featured.card1.title" />
+              </h4>
               <p className="text-muted-foreground">
-                Each kaftan is a unique masterpiece, featuring intricate Moroccan embroidery and premium fabrics
+                <T k="home.featured.card1.body" />
               </p>
             </div>
 
@@ -176,9 +213,11 @@ export default function Home(): React.JSX.Element {
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">Custom Tailoring</h4>
+              <h4 className="text-xl font-semibold mb-2">
+                <T k="home.featured.card2.title" />
+              </h4>
               <p className="text-muted-foreground">
-                Personalized measurements and color choices to ensure the perfect fit for your special occasion
+                <T k="home.featured.card2.body" />
               </p>
             </div>
 
@@ -186,9 +225,11 @@ export default function Home(): React.JSX.Element {
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <h4 className="text-xl font-semibold mb-2">Waiting List Access</h4>
+              <h4 className="text-xl font-semibold mb-2">
+                <T k="home.featured.card3.title" />
+              </h4>
               <p className="text-muted-foreground">
-                Join our exclusive registry for priority access to new collections and special offers
+                <T k="home.featured.card3.body" />
               </p>
             </div>
           </div>

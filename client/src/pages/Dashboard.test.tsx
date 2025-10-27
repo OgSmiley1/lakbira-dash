@@ -1,5 +1,5 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Dashboard from "./Dashboard";
 
@@ -43,6 +43,33 @@ const registrationsMock = [
   },
 ];
 
+const collectionsMock = [
+  {
+    id: "col1",
+    nameEn: "Ramadan 2025",
+    nameAr: "مجموعة رمضان ٢٠٢٥",
+    videoUrl: "https://cdn.example.com/ramadan.mp4",
+    coverImage: "https://cdn.example.com/ramadan.jpg",
+  },
+];
+
+const productsMock = [
+  {
+    id: "prod1",
+    nameEn: "Moonlight Kaftan",
+    nameAr: "قفطان ضوء القمر",
+    basePrice: 175000,
+    images: ["https://cdn.example.com/moonlight-1.jpg"],
+    availableColors: [
+      { hex: "#D4AF37", name: "Royal Gold", nameAr: "ذهبي ملكي" },
+    ],
+  },
+];
+
+const updateCollectionMediaMock = vi.fn().mockResolvedValue(undefined);
+const createCollectionMock = vi.fn().mockResolvedValue({ success: true, collectionId: "col-new" });
+const updateProductDetailsMock = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     orders: {
@@ -58,7 +85,30 @@ vi.mock("@/lib/trpc", () => ({
         useQuery: () => ({ data: registrationsMock, isLoading: false }),
       },
     },
-    useUtils: () => ({ orders: { list: { invalidate: vi.fn() } } }),
+    collections: {
+      list: {
+        useQuery: () => ({ data: collectionsMock, isLoading: false }),
+      },
+      updateMedia: {
+        useMutation: () => ({ mutateAsync: updateCollectionMediaMock, isPending: false }),
+      },
+      create: {
+        useMutation: () => ({ mutateAsync: createCollectionMock, isPending: false }),
+      },
+    },
+    products: {
+      list: {
+        useQuery: () => ({ data: productsMock, isLoading: false }),
+      },
+      updateDetails: {
+        useMutation: () => ({ mutateAsync: updateProductDetailsMock, isPending: false }),
+      },
+    },
+    useUtils: () => ({
+      orders: { list: { invalidate: vi.fn() } },
+      collections: { list: { invalidate: vi.fn() } },
+      products: { list: { invalidate: vi.fn() } },
+    }),
   },
 }));
 
@@ -88,5 +138,11 @@ describe("Dashboard", () => {
 
     expect(screen.getByRole("tab", { name: /قائمة الانتظار/ })).toBeTruthy();
     expect(screen.getByRole("tab", { name: /التسجيلات/ })).toBeTruthy();
+  });
+
+  it("exposes a content studio tab for media management", () => {
+    render(<Dashboard />);
+
+    expect(screen.getByRole("tab", { name: /content studio/i })).toBeTruthy();
   });
 });

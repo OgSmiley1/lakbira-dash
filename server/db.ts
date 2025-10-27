@@ -1,13 +1,43 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, Product, InsertProduct, collections, Collection, InsertCollection, orders, Order, InsertOrder, registrations, Registration, InsertRegistration } from "../drizzle/schema";
+import {
+  InsertUser,
+  users,
+  products,
+  Product,
+  InsertProduct,
+  collections,
+  Collection,
+  InsertCollection,
+  orders,
+  Order,
+  InsertOrder,
+  registrations,
+  Registration,
+  InsertRegistration,
+  productTranslations,
+  collectionTranslations,
+  productColorVariants,
+  ProductColorVariant,
+  productVariantImages,
+  ProductVariantImage,
+} from "../drizzle/schema";
 import { generateReadableId } from "@shared/lib/identifiers";
 import { ENV } from "./_core/env";
 import { nanoid } from "nanoid";
 import { sendOrderConfirmationEmail, sendRegistrationConfirmationEmail } from "./notifications/sendEmail";
 import type { SupportedLocale } from "./notifications/emailTemplates";
+import type { SupportedLocale as UiLocale } from "@shared/i18n";
+import { resolveLocalizedCopy, buildImagesByColor } from "./localization";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+
+/**
+ * Allows tests to override the shared database instance.
+ */
+export function __setDbInstance(testDb: ReturnType<typeof drizzle> | null): void {
+  _db = testDb;
+}
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -91,36 +121,139 @@ export async function getUser(id: string) {
 
 // ============ PRODUCTS ============
 
-export async function getAllProducts(): Promise<Product[]> {
+export type LocalisedProduct = Product & {
+  localized: {
+    name: string;
+    description: string;
+    story?: string | null;
+    fabric?: string | null;
+  };
+  imagesByColor: Record<string, string[]>;
+};
+
+async function hydrateProducts(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  productRows: Product[],
+  locale: UiLocale
+): Promise<LocalisedProduct[]> {
+  if (productRows.length === 0) {
+    return [];
+  }
+
+  const productIds = productRows.map(row => row.id);
+
+  const translations = await db
+    .select()
+    .from(productTranslations)
+    .where(inArray(productTranslations.productId, productIds));
+
+  const variants = await db
+    .select()
+    .from(productColorVariants)
+    .where(inArray(productColorVariants.productId, productIds));
+
+  const variantIds = variants.map(variant => variant.id);
+
+  const variantImages = variantIds.length
+    ? await db
+        .select()
+        .from(productVariantImages)
+        .where(inArray(productVariantImages.variantId, variantIds))
+    : [];
+
+  const variantsByProduct = new Map<string, ProductColorVariant[]>();
+  for (const variant of variants) {
+    const existing = variantsByProduct.get(variant.productId) ?? [];
+    existing.push(variant);
+    variantsByProduct.set(variant.productId, existing);
+  }
+
+  const imagesByVariant = new Map<string, ProductVariantImage[]>();
+  for (const image of variantImages) {
+    const existing = imagesByVariant.get(image.variantId) ?? [];
+    existing.push(image);
+    imagesByVariant.set(image.variantId, existing);
+  }
+
+  return productRows.map(row => {
+    const baseCopy = {
+      name: row.nameEn,
+      description: row.descriptionEn ?? "",
+      story: row.storyEn,
+      fabric: row.fabricEn,
+    };
+
+    const localized = resolveLocalizedCopy(
+      locale,
+      baseCopy,
+      translations
+        .filter(translation => translation.productId === row.id)
+        .map(translation => ({
+          locale: translation.locale as UiLocale,
+          name: translation.name,
+          description: translation.description,
+          story: translation.story,
+          fabric: translation.fabric,
+        }))
+    );
+
+    const colourVariants = (variantsByProduct.get(row.id) ?? []).sort(
+      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+    );
+
+    const variantImageRows = colourVariants.flatMap(variant =>
+      (imagesByVariant.get(variant.id) ?? []).map(image => ({
+        variantId: image.variantId,
+        imageUrl: image.imageUrl,
+        sortOrder: image.sortOrder,
+      }))
+    );
+
+    const imagesByColor = buildImagesByColor(
+      colourVariants.map(variant => ({ id: variant.id, colorKey: variant.colorKey })),
+      variantImageRows
+    );
+
+    const availableColors = colourVariants.length
+      ? colourVariants.map(variant => ({
+          hex: variant.colorKey,
+          name: variant.swatchNameEn ?? undefined,
+          nameAr: variant.swatchNameAr ?? undefined,
+        }))
+      : row.availableColors
+      ? JSON.parse(row.availableColors)
+      : [];
+
+    return {
+      ...row,
+      images: row.images ? JSON.parse(row.images) : [],
+      availableColors,
+      availableSizes: row.availableSizes ? JSON.parse(row.availableSizes) : [],
+      localized,
+      imagesByColor,
+    };
+  });
+}
+
+export async function getAllProducts(locale: UiLocale = "en"): Promise<LocalisedProduct[]> {
   const db = await getDb();
   if (!db) return [];
 
   const result = await db.select().from(products).where(eq(products.isActive, true));
-  
-  // Parse JSON fields
-  return result.map(p => ({
-    ...p,
-    images: p.images ? JSON.parse(p.images) : [],
-    availableColors: p.availableColors ? JSON.parse(p.availableColors) : [],
-    availableSizes: p.availableSizes ? JSON.parse(p.availableSizes) : [],
-  }));
+
+  return hydrateProducts(db, result, locale);
 }
 
-export async function getProductById(id: string): Promise<Product | undefined> {
+export async function getProductById(id: string, locale: UiLocale = "en"): Promise<LocalisedProduct | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
   const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
-  
+
   if (result.length === 0) return undefined;
-  
-  const p = result[0];
-  return {
-    ...p,
-    images: p.images ? JSON.parse(p.images) : [],
-    availableColors: p.availableColors ? JSON.parse(p.availableColors) : [],
-    availableSizes: p.availableSizes ? JSON.parse(p.availableSizes) : [],
-  };
+
+  const [product] = await hydrateProducts(db, [result[0]], locale);
+  return product;
 }
 
 export async function createProduct(product: InsertProduct): Promise<void> {
@@ -138,21 +271,185 @@ export async function createProduct(product: InsertProduct): Promise<void> {
   await db.insert(products).values(data as any);
 }
 
+/**
+ * Updates key merchandising attributes for an existing product record.
+ */
+export async function updateProductDetails(
+  productId: string,
+  updates: {
+    basePrice?: number;
+    images?: string[];
+    availableColors?: Array<Record<string, unknown>>;
+  }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: Partial<Product> & {
+    images?: string | null;
+    availableColors?: string | null;
+  } = {};
+
+  if (typeof updates.basePrice === "number") {
+    updateData.basePrice = updates.basePrice;
+  }
+
+  if (updates.images) {
+    updateData.images = JSON.stringify(updates.images);
+  }
+
+  if (updates.availableColors) {
+    updateData.availableColors = JSON.stringify(updates.availableColors);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return;
+  }
+
+  await db.update(products).set(updateData as any).where(eq(products.id, productId));
+}
+
 // ============ COLLECTIONS ============
 
-export async function getAllCollections(): Promise<Collection[]> {
+export type LocalisedCollection = Collection & {
+  localized: {
+    name: string;
+    description?: string | null;
+    story?: string | null;
+  };
+};
+
+async function hydrateCollections(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  rows: Collection[],
+  locale: UiLocale
+): Promise<LocalisedCollection[]> {
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const collectionIds = rows.map(row => row.id);
+  const translations = await db
+    .select()
+    .from(collectionTranslations)
+    .where(inArray(collectionTranslations.collectionId, collectionIds));
+
+  return rows.map(row => {
+    const base = {
+      name: row.nameEn,
+      description: row.descriptionEn ?? null,
+      story: row.storyEn ?? null,
+    };
+
+    const localized = resolveLocalizedCopy(
+      locale,
+      {
+        name: base.name,
+        description: base.description ?? "",
+        story: base.story ?? null,
+        fabric: undefined,
+      },
+      translations
+        .filter(translation => translation.collectionId === row.id)
+        .map(translation => ({
+          locale: translation.locale as UiLocale,
+          name: translation.name,
+          description: translation.description,
+          story: translation.story,
+          fabric: undefined,
+        }))
+    );
+
+    return {
+      ...row,
+      localized: {
+        name: localized.name,
+        description: localized.description,
+        story: localized.story,
+      },
+    };
+  });
+}
+
+export async function getAllCollections(locale: UiLocale = "en"): Promise<LocalisedCollection[]> {
   const db = await getDb();
   if (!db) return [];
 
-  return await db.select().from(collections).where(eq(collections.isActive, true));
+  const rows = await db.select().from(collections).where(eq(collections.isActive, true));
+  return hydrateCollections(db, rows, locale);
 }
 
-export async function getCollectionById(id: string): Promise<Collection | undefined> {
+export async function getCollectionById(id: string, locale: UiLocale = "en"): Promise<LocalisedCollection | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
   const result = await db.select().from(collections).where(eq(collections.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  if (result.length === 0) {
+    return undefined;
+  }
+
+  const [collection] = await hydrateCollections(db, [result[0]], locale);
+  return collection;
+}
+
+/**
+ * Creates a new couture collection entry with optional hero media metadata.
+ */
+export async function createCollection(
+  collection: Omit<InsertCollection, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const collectionId = nanoid();
+  const payload: InsertCollection = {
+    ...collection,
+    id: collectionId,
+    descriptionEn: collection.descriptionEn ?? null,
+    descriptionAr: collection.descriptionAr ?? null,
+    storyEn: collection.storyEn ?? null,
+    storyAr: collection.storyAr ?? null,
+    coverImage: collection.coverImage ?? null,
+    videoUrl: collection.videoUrl ?? null,
+    isActive: collection.isActive ?? true,
+  } as InsertCollection;
+
+  await db.insert(collections).values(payload as any);
+
+  return collectionId;
+}
+
+/**
+ * Updates the associated media assets for an existing couture collection.
+ */
+export async function updateCollectionMedia(
+  collectionId: string,
+  media: { videoUrl?: string | null; coverImage?: string | null }
+): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const updateData: Partial<Collection> = {};
+
+  if (media.videoUrl !== undefined) {
+    updateData.videoUrl = media.videoUrl ?? null;
+  }
+
+  if (media.coverImage !== undefined) {
+    updateData.coverImage = media.coverImage ?? null;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return;
+  }
+
+  await db.update(collections).set(updateData).where(eq(collections.id, collectionId));
 }
 
 // ============ ORDERS ============
