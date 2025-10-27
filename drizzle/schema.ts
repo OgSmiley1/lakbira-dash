@@ -129,3 +129,29 @@ export const orderHistory = mysqlTable("orderHistory", {
 export type OrderHistory = typeof orderHistory.$inferSelect;
 export type InsertOrderHistory = typeof orderHistory.$inferInsert;
 
+
+
+/**
+ * Audit logs for tracking all admin actions
+ */
+export const auditLogs = mysqlTable("auditLogs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  userName: varchar("userName", { length: 255 }),
+  action: varchar("action", { length: 100 }).notNull(),
+  entityType: varchar("entityType", { length: 100 }).notNull(),
+  entityId: varchar("entityId", { length: 64 }),
+  changes: json("changes"),
+  oldValues: json("oldValues"),
+  newValues: json("newValues"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  status: varchar("status", { length: 50 }).default("success"),
+  errorMessage: text("errorMessage"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+

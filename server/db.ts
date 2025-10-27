@@ -231,3 +231,151 @@ export async function updateOrderStatus(
   await db.update(orders).set(updateData).where(eq(orders.id, orderId));
 }
 
+
+
+// ============ AUDIT LOGS ============
+
+export async function createAuditLog(data: {
+  userId: string;
+  userName?: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  changes?: Record<string, any>;
+  oldValues?: Record<string, any>;
+  newValues?: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
+  status?: string;
+  errorMessage?: string;
+  metadata?: Record<string, any>;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create audit log: database not available");
+    return;
+  }
+
+  try {
+    const auditId = nanoid();
+    const auditData = {
+      id: auditId,
+      userId: data.userId,
+      userName: data.userName || null,
+      action: data.action,
+      entityType: data.entityType,
+      entityId: data.entityId || null,
+      changes: data.changes ? JSON.stringify(data.changes) : null,
+      oldValues: data.oldValues ? JSON.stringify(data.oldValues) : null,
+      newValues: data.newValues ? JSON.stringify(data.newValues) : null,
+      ipAddress: data.ipAddress || null,
+      userAgent: data.userAgent || null,
+      status: data.status || 'success',
+      errorMessage: data.errorMessage || null,
+      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      createdAt: new Date(),
+    };
+
+    // Direct SQL insert since auditLogs might not be in the schema yet
+    const query = `
+      INSERT INTO auditLogs (
+        id, userId, userName, action, entityType, entityId, 
+        changes, oldValues, newValues, ipAddress, userAgent, 
+        status, errorMessage, metadata, createdAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      auditData.id,
+      auditData.userId,
+      auditData.userName,
+      auditData.action,
+      auditData.entityType,
+      auditData.entityId,
+      auditData.changes,
+      auditData.oldValues,
+      auditData.newValues,
+      auditData.ipAddress,
+      auditData.userAgent,
+      auditData.status,
+      auditData.errorMessage,
+      auditData.metadata,
+      auditData.createdAt,
+    ];
+
+    await (db as any).execute(query, values);
+  } catch (error) {
+    console.error("[Database] Failed to create audit log:", error);
+    // Don't throw - audit logging failure shouldn't break the app
+  }
+}
+
+export async function getAuditLogs(filters?: {
+  userId?: string;
+  action?: string;
+  entityType?: string;
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+}): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    let query = 'SELECT * FROM auditLogs WHERE 1=1';
+    const values: any[] = [];
+
+    if (filters?.userId) {
+      query += ' AND userId = ?';
+      values.push(filters.userId);
+    }
+
+    if (filters?.action) {
+      query += ' AND action = ?';
+      values.push(filters.action);
+    }
+
+    if (filters?.entityType) {
+      query += ' AND entityType = ?';
+      values.push(filters.entityType);
+    }
+
+    if (filters?.startDate) {
+      query += ' AND createdAt >= ?';
+      values.push(filters.startDate);
+    }
+
+    if (filters?.endDate) {
+      query += ' AND createdAt <= ?';
+      values.push(filters.endDate);
+    }
+
+    query += ' ORDER BY createdAt DESC';
+
+    if (filters?.limit) {
+      query += ' LIMIT ?';
+      values.push(filters.limit);
+    }
+
+    const result = await (db as any).execute(query, values);
+    return Array.isArray(result) ? result[0] : [];
+  } catch (error) {
+    console.error("[Database] Failed to get audit logs:", error);
+    return [];
+  }
+}
+
+export async function getAuditLogsByEntity(entityType: string, entityId: string): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const query = 'SELECT * FROM auditLogs WHERE entityType = ? AND entityId = ? ORDER BY createdAt DESC';
+    const result = await (db as any).execute(query, [entityType, entityId]);
+    return Array.isArray(result) ? result[0] : [];
+  } catch (error) {
+    console.error("[Database] Failed to get entity audit logs:", error);
+    return [];
+  }
+}
+
