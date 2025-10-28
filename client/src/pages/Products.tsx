@@ -26,10 +26,10 @@ export default function Products() {
           <div className="text-center space-y-3 sm:space-y-4 max-w-3xl mx-auto">
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-foreground">
               Our Collection
-              <span className="block text-2xl sm:text-3xl md:text-4xl text-muted-foreground mt-2" lang="ar">
-                مجموعتنا
-              </span>
             </h1>
+            <p className="text-2xl sm:text-3xl md:text-4xl text-muted-foreground" lang="ar">
+              مجموعتنا
+            </p>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
               Discover handcrafted luxury pieces that blend tradition with contemporary elegance
             </p>
