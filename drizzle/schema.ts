@@ -114,6 +114,9 @@ export const orders = mysqlTable("orders", {
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 
+// Import notification schemas
+export * from './notifications-schema';
+
 /**
  * Order status history for tracking
  */

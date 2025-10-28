@@ -29,6 +29,13 @@
       "when": 1761568337459,
       "tag": "0003_material_lilith",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1761662007880,
+      "tag": "0004_reflective_dazzler",
+      "breakpoints": true
     }
   ]
 }
