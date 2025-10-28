@@ -84,6 +84,11 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex gap-3 sm:gap-6 items-center">
+          <Link href="/admin/login">
+            <button className="text-white hover:text-primary transition-colors text-xs sm:text-sm font-medium px-3 py-1.5 border border-white/30 rounded-lg hover:bg-white/10">
+              Admin
+            </button>
+          </Link>
           <button className="text-white hover:text-primary transition-colors text-xs sm:text-sm font-medium">
             English
           </button>

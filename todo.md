@@ -308,3 +308,12 @@
 - [ ] Ensure English pages are fully English (no mixed English/Arabic)
 - [ ] Test language switching consistency
 
+
+
+
+## 🔐 ADMIN ACCESS (CRITICAL)
+
+- [x] Add visible "Admin" link in website navigation
+- [ ] Test admin login flow from main website
+- [ ] Verify all admin dashboard features accessible
+
