@@ -5,6 +5,7 @@ import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { getAllProducts, getProductById, getAllCollections, getCollectionById, createOrder, getAllOrders, getOrderById, updateOrderStatus, getAuditLogs } from "./db";
 import { aiRouter } from "./aiRouter";
 import { notificationRouter } from "./notificationRouter";
+import { websiteRouter } from "./websiteRouter";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -161,7 +162,8 @@ export const appRouter = router({
       }),
   }),
 
-  notifications: notificationRouter,
+  notification: notificationRouter,
+  website: websiteRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -7,6 +7,7 @@ import { AlertCircle, CheckCircle, Clock, BarChart3, Users, Package, Image, Sett
 import { trpc } from "@/lib/trpc";
 import AuditLogs from "./AuditLogs";
 import AIInsights from "./AIInsights";
+import AdminWebsiteSettings from "./AdminWebsiteSettings";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -200,7 +201,7 @@ export default function AdminDashboard() {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <SettingsManagement />
+            <AdminWebsiteSettings />
           </TabsContent>
         </Tabs>
       </div>
@@ -396,32 +397,5 @@ function CollectionsManagement() {
   );
 }
 
-// Settings Management Component
-function SettingsManagement() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Platform Settings</CardTitle>
-        <CardDescription>Configure platform behavior and preferences</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="p-4 border border-border rounded-lg">
-            <h4 className="font-semibold mb-2">Background Slideshow Speed</h4>
-            <input type="range" min="1" max="10" defaultValue="5" className="w-full" />
-            <p className="text-sm text-muted-foreground mt-2">Current: 5 seconds per slide</p>
-          </div>
-          <div className="p-4 border border-border rounded-lg">
-            <h4 className="font-semibold mb-2">Admin Notifications</h4>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4" />
-              <span className="text-sm">Email notifications for new orders</span>
-            </label>
-          </div>
-          <Button>Save Settings</Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+
 

@@ -15,26 +15,26 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   
   // Fetch notifications
-  const { data: notifications, refetch } = trpc.notifications.getMyNotifications.useQuery(
+  const { data: notifications, refetch } = trpc.notification.getMyNotifications.useQuery(
     { limit: 20, includeArchived: false },
     { enabled: isOpen }
   );
   
-  const { data: unreadCount } = trpc.notifications.getUnreadCount.useQuery();
+  const { data: unreadCount } = trpc.notification.getUnreadCount.useQuery();
   
-  const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
+  const markAsReadMutation = trpc.notification.markAsRead.useMutation({
     onSuccess: () => {
       refetch();
     }
   });
   
-  const markAllAsReadMutation = trpc.notifications.markAllAsRead.useMutation({
+  const markAllAsReadMutation = trpc.notification.markAllAsRead.useMutation({
     onSuccess: () => {
       refetch();
     }
   });
   
-  const archiveMutation = trpc.notifications.archive.useMutation({
+  const archiveMutation = trpc.notification.archive.useMutation({
     onSuccess: () => {
       refetch();
     }

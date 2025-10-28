@@ -115,7 +115,8 @@ export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 
 // Import notification schemas
-export * from './notifications-schema';
+export * from "./notifications-schema";
+export * from "./website-settings-schema";
 
 /**
  * Order status history for tracking
