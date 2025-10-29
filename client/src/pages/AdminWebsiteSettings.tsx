@@ -42,6 +42,9 @@ export default function AdminWebsiteSettings() {
     aboutDescriptionEn: settings?.aboutDescriptionEn || "",
     aboutDescriptionAr: settings?.aboutDescriptionAr || "",
     
+    // Background Media Settings
+    slideshowSpeed: (settings as any)?.slideshowSpeed || 5000,
+    
     // Contact
     contactEmail: settings?.contactEmail || "",
     contactPhone: settings?.contactPhone || "",
@@ -260,11 +263,13 @@ export default function AdminWebsiteSettings() {
                 <Label>Slideshow Speed (seconds)</Label>
                 <Input
                   type="number"
-                  defaultValue={5}
+                  value={formData.slideshowSpeed / 1000}
+                  onChange={(e) => setFormData({...formData, slideshowSpeed: parseInt(e.target.value) * 1000})}
                   min={3}
                   max={30}
                   placeholder="5"
                 />
+                <p className="text-xs text-muted-foreground">Time between background image/video transitions</p>
               </div>
             </CardContent>
           </Card>
