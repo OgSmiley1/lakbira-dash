@@ -12,6 +12,11 @@ import AdminWebsiteSettings from "./AdminWebsiteSettings";
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // All hooks must be called before any conditional returns
+  const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: user?.role === "admin" });
+  const { data: orders } = trpc.orders.list.useQuery(undefined, { enabled: user?.role === "admin" });
+  const { data: clients } = trpc.admin.getClients.useQuery(undefined, { enabled: user?.role === "admin" });
 
   // Check if user is admin
   if (user?.role !== "admin") {
@@ -33,10 +38,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const { data: stats } = trpc.admin.getStats.useQuery();
-  const { data: orders } = trpc.orders.list.useQuery();
-  const { data: clients } = trpc.admin.getClients.useQuery();
 
   return (
     <div className="min-h-screen bg-background">

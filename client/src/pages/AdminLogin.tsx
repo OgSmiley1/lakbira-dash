@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +16,11 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in as admin
-  if (user?.role === "admin") {
-    setLocation("/admin");
-    return null;
-  }
+  useEffect(() => {
+    if (user?.role === "admin") {
+      setLocation("/admin");
+    }
+  }, [user, setLocation]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

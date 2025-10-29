@@ -9,16 +9,16 @@ import { trpc } from "@/lib/trpc";
 
 export default function AuditLogs() {
   const [filters, setFilters] = useState({
-    action: "",
-    entityType: "",
+    action: "all",
+    entityType: "all",
     userId: "",
     startDate: "",
     endDate: "",
   });
 
   const { data: logs, isLoading } = trpc.admin.getAuditLogs.useQuery({
-    action: filters.action || undefined,
-    entityType: filters.entityType || undefined,
+    action: filters.action && filters.action !== "all" ? filters.action : undefined,
+    entityType: filters.entityType && filters.entityType !== "all" ? filters.entityType : undefined,
     userId: filters.userId || undefined,
     startDate: filters.startDate ? new Date(filters.startDate) : undefined,
     endDate: filters.endDate ? new Date(filters.endDate) : undefined,
@@ -31,8 +31,8 @@ export default function AuditLogs() {
 
   const handleReset = () => {
     setFilters({
-      action: "",
-      entityType: "",
+      action: "all",
+      entityType: "all",
       userId: "",
       startDate: "",
       endDate: "",
@@ -77,7 +77,7 @@ export default function AuditLogs() {
                 <SelectValue placeholder="Action" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Actions</SelectItem>
+                <SelectItem value="all">All Actions</SelectItem>
                 <SelectItem value="approve">Approve</SelectItem>
                 <SelectItem value="reject">Reject</SelectItem>
                 <SelectItem value="update">Update</SelectItem>
@@ -90,7 +90,7 @@ export default function AuditLogs() {
                 <SelectValue placeholder="Entity Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="order">Order</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
                 <SelectItem value="product">Product</SelectItem>

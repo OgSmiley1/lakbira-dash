@@ -317,3 +317,19 @@
 - [ ] Test admin login flow from main website
 - [ ] Verify all admin dashboard features accessible
 
+
+
+
+## 🐛 CRITICAL BUGS
+
+- [ ] Fix Audit tab error: Select.Item value prop cannot be empty string
+- [ ] Test AI tab functionality
+- [ ] Test Settings tab functionality
+
+
+
+
+## 🐛 CRITICAL BUGS (NEW)
+
+- [x] Fix AdminLogin setState during render error when logged-in admin visits /admin/login
+
