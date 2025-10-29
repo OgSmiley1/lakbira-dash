@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import AuditLogs from "./AuditLogs";
 import AIInsights from "./AIInsights";
 import AdminWebsiteSettings from "./AdminWebsiteSettings";
+import AdminUsers from "./AdminUsers";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -113,7 +114,7 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 mb-6">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -125,6 +126,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Clients</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Users</span>
             </TabsTrigger>
             <TabsTrigger value="media" className="flex items-center gap-2">
               <Image className="w-4 h-4" />
@@ -178,6 +183,11 @@ export default function AdminDashboard() {
           {/* Clients Tab */}
           <TabsContent value="clients" className="space-y-6">
             <ClientsManagement clients={clients} />
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <AdminUsers />
           </TabsContent>
 
           {/* Media Tab */}

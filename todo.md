@@ -346,3 +346,17 @@
 - [x] Add product price editing in admin (already exists - basePrice field)
 - [x] Add video display management in admin (Media tab exists)
 
+
+
+
+## 🔴 CRITICAL REMAINING TASKS
+
+- [ ] Fix fabric color selection bug (colors not changing)
+- [ ] Create admin dashboard for registered users list
+- [ ] Display user registration details (name, email, location, etc.)
+- [ ] Verify admin can change videos
+- [ ] Verify admin can change collections
+- [ ] Verify admin can change pictures
+- [ ] Verify admin can change prices
+- [ ] Check for unpushed updates and push to GitHub
+
