@@ -30,8 +30,8 @@ export default function AdminLogin() {
     try {
       // In a real application, this would call a backend authentication endpoint
       // For now, we'll use the default credentials
-      const DEFAULT_USERNAME = "Moath121";
-      const DEFAULT_PASSWORD = "Dash001";
+      const DEFAULT_USERNAME = "Dash-1";
+      const DEFAULT_PASSWORD = "Dash_Hamdaan";
 
       if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
         // Store temporary admin token (in production, use secure session)
@@ -124,7 +124,7 @@ export default function AdminLogin() {
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-3">
                 <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-blue-300">
-                  <strong>Demo Credentials:</strong> Username: Moath121, Password: Dash001
+                  <strong>Admin Credentials:</strong> Username: Dash-1, Password: Dash_Hamdaan
                 </p>
               </div>
 
